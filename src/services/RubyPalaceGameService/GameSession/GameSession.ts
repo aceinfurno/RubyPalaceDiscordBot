@@ -1,11 +1,11 @@
-import { IGameState } from "./IGameState";
-import { IGameSession } from "./IGameSession";
+import { IGameState, IGameSession, CharacterCreationDraft, GameActionResult } from "./index";
 
 export class GameSession implements IGameSession {
   public readonly userId: string;
   public readonly createdAt: Date;
   public lastActiveAt: Date;
   private state: IGameState;
+  private characterDraft: CharacterCreationDraft = {};
 
   constructor(userId: string, startingState: IGameState ) {
     this.userId = userId;
@@ -24,9 +24,9 @@ export class GameSession implements IGameSession {
     this.state = state;
     this.touch();
 }
-  public async handleAction(action: string){
-    this.state.handleAction(action, this);
-  }
+  public async handleAction(action: string): Promise<GameActionResult> {
+    return await this.state.handleAction(action, this);
+}
   static createNew(userId: string, startingState: IGameState): GameSession {
     return new GameSession(userId, startingState);
   }
@@ -38,4 +38,24 @@ export class GameSession implements IGameSession {
 
     return session;
   }
+  public getCharacterCreationDraft(): CharacterCreationDraft {
+    return this.characterDraft;
+  };
+
+  public setCharacterCreationDraft(draft: CharacterCreationDraft): void{
+    this.characterDraft = draft;
+  }
+
+  public getAvailableCharacterClasses(): {
+  key: string;
+  name: string;
+  description: string;
+}[] {
+  return [{key: "Rogue", name: "Rogue1", description: "Stabby"}];
+}
+
+public async createCharacterFromDraft(): Promise<void> {
+console.log("Creating character from draft:", this.characterDraft);
+}
+
 }

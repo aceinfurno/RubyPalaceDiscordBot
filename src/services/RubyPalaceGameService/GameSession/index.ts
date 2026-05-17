@@ -5,3 +5,5 @@ export * from "./IGameState";
 export * from "./StartMenuState";
 export * from "./CharacterCreationState";
 export * from "./GameView";
+export * from "./GameModal";
+export * from "./GameActionResult";

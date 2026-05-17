@@ -18,12 +18,25 @@ export class PlayCommand implements ICommand {
   public async execute(
     interaction: ChatInputCommandInteraction
   ): Promise<void> {
+
     const session = await this.gameService.launchGame(
       interaction.user.id
     );
 
-    const payload = await this.gameService.render(session);
+    const result = await this.gameService.render(session);
 
-    await interaction.reply(payload);
+    switch (result.type) {
+
+      case "update":
+        await interaction.editReply(
+          result.payload as any
+        );
+        return;
+
+      case "modal":
+        throw new Error(
+          "Slash commands cannot directly open modals."
+        );
+    }
   }
 }

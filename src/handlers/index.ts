@@ -1,2 +1,2 @@
 export * from "./CommandHandler";
-export * from "./ButtonHandler";
+export * from "./InteractionHandler";

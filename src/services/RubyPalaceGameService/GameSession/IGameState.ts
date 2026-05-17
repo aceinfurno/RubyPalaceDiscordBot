@@ -1,4 +1,4 @@
-import { IGameSession, GameView } from "./index";
+import { IGameSession, GameView, GameActionResult } from "./index";
 
 export interface IGameState {
   readonly id: string;
@@ -8,5 +8,5 @@ export interface IGameState {
   handleAction(
     action: string,
     session: IGameSession
-  ): Promise<void>;
+  ): Promise<GameActionResult>;
 }

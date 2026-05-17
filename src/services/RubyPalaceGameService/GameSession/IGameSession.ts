@@ -1,4 +1,4 @@
-import { IGameState } from "./IGameState";
+import { IGameState, CharacterCreationDraft, GameActionResult } from "./index";
 
 export interface IGameSession {
   readonly userId: string;
@@ -11,5 +11,16 @@ export interface IGameSession {
 
   setState(state: IGameState): void;
 
-  handleAction(action: string): Promise<void>;
+  handleAction(action: string): Promise<GameActionResult>;
+  getCharacterCreationDraft(): CharacterCreationDraft;
+
+  setCharacterCreationDraft(draft: CharacterCreationDraft): void;
+
+  getAvailableCharacterClasses(): {
+    key: string;
+    name: string;
+    description: string;
+  }[];
+
+  createCharacterFromDraft(): Promise<void>;
 }

@@ -2,7 +2,7 @@ import { InteractionUpdateOptions } from "discord.js";
 import { IGameService } from "../IGameService";
 import { PlayerSaveRepository} from "./player/PlayerSaveRepository";
 import { GameSession, StartMenuState, IGameSession } from "./GameSession";
-import { DiscordGameRenderer } from "./renderer/DiscordGameRenderer";
+import { DiscordGameRenderer, DiscordPayload } from "./renderer";
 import { PlayCommand } from "./PlayCommand";
 import { ICommand } from "../../commands/ICommand";
 
@@ -54,23 +54,29 @@ export class RubyPalaceGameService implements IGameService {
     return this.activeSessions.get(userId);
   }
 
-  public async render(session: IGameSession): Promise<InteractionUpdateOptions>{
+  public async render(session: IGameSession): Promise<DiscordPayload<unknown>>{
     const payload = await this.renderer.render(session);
     return payload;
   }
-  public async handleAction(userId: string, action: string): Promise<InteractionUpdateOptions> {
+  public async handleAction(
+  userId: string,
+  action: string
+): Promise<DiscordPayload<unknown>> {
+  const session = this.getSession(userId);
 
-
-    const session = this.getSession(userId);
-    if (!session) {
-      throw new Error("No active game session found.");
-    }
-    await session.handleAction(action);
-
-    session.touch();
-
-    return this.render(session);
-
+  if (!session) {
+    throw new Error("No active game session found.");
   }
+
+  const result = await session.handleAction(action);
+
+  session.touch();
+
+  if (result.type === "modal") {
+    return this.renderer.renderModal(result.modal);
+  }
+
+  return this.renderer.render(session);
+}
 
 }

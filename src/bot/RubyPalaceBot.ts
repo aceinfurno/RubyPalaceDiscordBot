@@ -3,7 +3,7 @@ import {
   GatewayIntentBits
 } from "discord.js";
 
-import { CommandHandler, ButtonHandler } from "../handlers";
+import { CommandHandler, InteractionHandler } from "../handlers";
 import { IBotService } from "../services/IBotService";
 
 export class RubyPalaceBot {
@@ -12,7 +12,7 @@ export class RubyPalaceBot {
 
   constructor(
     private commandHandler: CommandHandler,
-    private buttonHandler: ButtonHandler
+    private interactionHandler: InteractionHandler
   ) {
 
     this.client = new Client({
@@ -23,7 +23,7 @@ export class RubyPalaceBot {
   }
   public loadServices(services: IBotService[]): void {
     for (const service of services) {
-      this.buttonHandler.loadService(service);
+      this.interactionHandler.loadService(service);
       this.commandHandler.loadCommands(service.getCommands());
     }
   }
@@ -41,24 +41,15 @@ export class RubyPalaceBot {
     });
 
     this.client.on(
-      "interactionCreate",
-      async (interaction) => {
+  "interactionCreate",
+  async (interaction) => {
+    if (interaction.isChatInputCommand()) {
+      await this.commandHandler.handleInteraction(interaction);
+      return;
+    }
 
-        if (interaction.isChatInputCommand()) {
-          await this.commandHandler
-            .handleInteraction(interaction);
-
-          return;
-        }
-
-        if (interaction.isButton()) {
-          await this.buttonHandler
-            .handle(interaction);
-
-          return;
-        }
-
-      }
-    );
+    await this.interactionHandler.handle(interaction);
+  }
+);
   }
 }

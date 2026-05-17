@@ -1,6 +1,10 @@
-import { IGameState, GameView, IGameSession, CharacterCreationState } from "./index";
-
-
+import {
+  IGameState,
+  GameView,
+  IGameSession,
+  CharacterCreationState,
+  GameActionResult,
+} from "./index";
 
 export class StartMenuState implements IGameState {
   public readonly id = "start_menu";
@@ -29,18 +33,28 @@ export class StartMenuState implements IGameState {
   public async handleAction(
     action: string,
     session: IGameSession
-  ): Promise<void> {
+  ): Promise<GameActionResult> {
+
     switch (action) {
+
       case "new_character":
         session.setState(new CharacterCreationState());
-        return;
+
+        return {
+          type: "render",
+        };
 
       case "load_character":
         // Placeholder until saves/character list is ready.
-        return;
+
+        return {
+          type: "render",
+        };
 
       default:
-        throw new Error(`Invalid action '${action}' for StartMenuState`);
+        throw new Error(
+          `Invalid action '${action}' for StartMenuState`
+        );
     }
   }
 }

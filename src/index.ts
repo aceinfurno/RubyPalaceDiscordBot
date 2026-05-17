@@ -2,7 +2,7 @@ import * as dotenv from "dotenv";
 
 import { RubyPalaceBot } from "./bot/RubyPalaceBot";
 
-import { CommandHandler, ButtonHandler } from "./handlers/index";
+import { CommandHandler, InteractionHandler } from "./handlers/index";
 
 import { RubyPalaceGameService} from "./services/RubyPalaceGameService/RubyPalaceGameService";
 
@@ -15,8 +15,8 @@ const RubyPalaceGame = new RubyPalaceGameService();
 
 const commandHandler = new CommandHandler();
 
-const buttonHandler = new ButtonHandler();
+const interactionHandler = new InteractionHandler();
 const services: IBotService[] = [RubyPalaceGame];
-const bot = new RubyPalaceBot(commandHandler, buttonHandler);
+const bot = new RubyPalaceBot(commandHandler, interactionHandler);
 bot.loadServices(services);
 bot.start(process.env.TOKEN!);
