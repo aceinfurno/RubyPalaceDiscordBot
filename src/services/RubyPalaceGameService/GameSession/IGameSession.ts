@@ -1,4 +1,5 @@
-import { IGameState, CharacterCreationDraft, GameActionResult } from "./index";
+import { IGameState, GameActionResult } from "./index";
+import { CharacterInfo, PlayerCharacter } from "../character";
 
 export interface IGameSession {
   readonly userId: string;
@@ -12,15 +13,11 @@ export interface IGameSession {
   setState(state: IGameState): void;
 
   handleAction(action: string): Promise<GameActionResult>;
-  getCharacterCreationDraft(): CharacterCreationDraft;
+  getCharacterInfo(): Partial<CharacterInfo>;
 
-  setCharacterCreationDraft(draft: CharacterCreationDraft): void;
+  setCharacterInfo(draft: Partial<CharacterInfo>): void;
 
-  getAvailableCharacterClasses(): {
-    key: string;
-    name: string;
-    description: string;
-  }[];
-
+  getPlayerCharacter(): PlayerCharacter | undefined;
+  setPlayerCharacter(character: PlayerCharacter): void;
   createCharacterFromDraft(): Promise<void>;
 }

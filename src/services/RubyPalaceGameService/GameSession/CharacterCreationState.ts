@@ -1,18 +1,14 @@
-import { IGameState, IGameSession, GameView, GameActionResult } from "./index";
+import { IGameState, IGameSession, GameView, GameActionResult, MainMenuState } from "./index";
+import * as Player from "../character";
 
-
-export type CharacterCreationDraft = {
-  name?: string;
-  classKey?: string;
-};
 
 export class CharacterCreationState implements IGameState {
   public readonly id = "character_creation";
 
   public getView(session: IGameSession): GameView {
-    const draft = session.getCharacterCreationDraft();
+    const draft = session.getCharacterInfo();
 
-    if (!draft.name) {
+    if (!draft.characterName) {
       return {
         title: "Character Creation",
         description:
@@ -27,7 +23,7 @@ export class CharacterCreationState implements IGameState {
               {
                 id: "name",
                 label: "Enter your character name",
-                placeholder: "Rixian",
+                placeholder: "Enter name...",
                 required: true,
                 minLength: 2,
                 maxLength: 24,
@@ -38,13 +34,13 @@ export class CharacterCreationState implements IGameState {
       };
     }
 
-    if (!draft.classKey) {
-      const availableClasses = session.getAvailableCharacterClasses();
+    if (!draft.classId) {
+      const availableClasses = Player.CharacterClassRegistry.getAvailableClasses();
 
       return {
         title: "Character Creation",
         description:
-          `Name: **${draft.name}**\n\n` +
+          `Name: **${draft.characterName}**\n\n` +
           "Now choose your character class.",
         controls: [
           {
@@ -52,9 +48,9 @@ export class CharacterCreationState implements IGameState {
             action: "choose_character_class",
             placeholder: "Choose a class",
             options: availableClasses.map(characterClass => ({
-              label: characterClass.name,
-              value: characterClass.key,
-              description: characterClass.description,
+              label: characterClass.getName(),
+              value: characterClass.getId(),
+              description: characterClass.getDescription(),
             })),
           },
           {
@@ -67,15 +63,13 @@ export class CharacterCreationState implements IGameState {
       };
     }
 
-    const selectedClass = session
-      .getAvailableCharacterClasses()
-      .find(characterClass => characterClass.key === draft.classKey);
+    const selectedClass = Player.CharacterClassRegistry.create(draft.classId);
 
     return {
       title: "Confirm Character",
       description:
-        `Name: **${draft.name}**\n` +
-        `Class: **${selectedClass?.name ?? draft.classKey}**\n\n` +
+        `Name: **${draft.characterName}**\n` +
+        `Class: **${selectedClass?.getName() ?? draft.classId}**\n\n` +
         "Create this character?",
       controls: [
         {
@@ -98,7 +92,7 @@ export class CharacterCreationState implements IGameState {
   action: string,
   session: IGameSession
 ): Promise<GameActionResult> {
-  const draft = session.getCharacterCreationDraft();
+  const draft = session.getCharacterInfo();
 
   if (action === "set_character_name") {
     return {
@@ -110,7 +104,7 @@ export class CharacterCreationState implements IGameState {
           {
             id: "name",
             label: "Enter your character name",
-            placeholder: "Rixian",
+            placeholder: "Enter Name...",
             required: true,
             minLength: 2,
             maxLength: 24,
@@ -121,40 +115,43 @@ export class CharacterCreationState implements IGameState {
   }
 
   if (action.startsWith("set_character_name:")) {
-    const name = action
+    const characterName = action
       .slice("set_character_name:".length)
       .trim();
 
-    if (!name) {
+    if (!characterName) {
       return { type: "render" };
     }
 
-    session.setCharacterCreationDraft({
+    session.setCharacterInfo({
       ...draft,
-      name,
+      characterName,
     });
 
     return { type: "render" };
   }
 
   if (action.startsWith("choose_character_class:")) {
-    const classKey = action.slice("choose_character_class:".length);
+  const classId = action.slice(
+    "choose_character_class:".length
+  ) as Player.CharacterClassId;
 
-    session.setCharacterCreationDraft({
-      ...draft,
-      classKey,
-    });
+  session.setCharacterInfo({
+    ...draft,
+    classId,
+  });
 
-    return { type: "render" };
-  }
+  return { type: "render" };
+}
 
   if (action === "restart_character_creation") {
-    session.setCharacterCreationDraft({});
+    session.setCharacterInfo({});
     return { type: "render" };
   }
 
   if (action === "confirm_character_creation") {
     await session.createCharacterFromDraft();
+    session.setState(new MainMenuState());
     return { type: "render" };
   }
 

@@ -1,11 +1,13 @@
-import { IGameState, IGameSession, CharacterCreationDraft, GameActionResult } from "./index";
+import { IGameState, IGameSession, GameActionResult } from "./index";
+import * as Player from "../character";
 
 export class GameSession implements IGameSession {
   public readonly userId: string;
   public readonly createdAt: Date;
   public lastActiveAt: Date;
   private state: IGameState;
-  private characterDraft: CharacterCreationDraft = {};
+  private characterInfo: Partial<Player.CharacterInfo> = {};
+  private activeCharacter: Player.PlayerCharacter | undefined;
 
   constructor(userId: string, startingState: IGameState ) {
     this.userId = userId;
@@ -38,24 +40,38 @@ export class GameSession implements IGameSession {
 
     return session;
   }
-  public getCharacterCreationDraft(): CharacterCreationDraft {
-    return this.characterDraft;
+  public getCharacterInfo(): Partial<Player.CharacterInfo> {
+    return this.characterInfo;
   };
 
-  public setCharacterCreationDraft(draft: CharacterCreationDraft): void{
-    this.characterDraft = draft;
+  public setCharacterInfo(draft: Partial<Player.CharacterInfo>): void{
+    this.characterInfo = draft;
+  }
+  public getPlayerCharacter(): Player.PlayerCharacter | undefined{
+    return this.activeCharacter
+  }
+  public setPlayerCharacter(character: Player.PlayerCharacter){
+    this.activeCharacter = character;
   }
 
-  public getAvailableCharacterClasses(): {
-  key: string;
-  name: string;
-  description: string;
-}[] {
-  return [{key: "Rogue", name: "Rogue1", description: "Stabby"}];
-}
+  public async createCharacterFromDraft(): Promise<void> {
+    if (
+      !this.characterInfo.characterName ||
+      !this.characterInfo.classId
+    ) {
+      throw new Error("Character creation draft is incomplete.");
+    }
 
-public async createCharacterFromDraft(): Promise<void> {
-console.log("Creating character from draft:", this.characterDraft);
-}
+    const characterInfo: Player.CharacterInfo = {
+      id: crypto.randomUUID(),
+      userId: this.userId,
+
+      characterName: this.characterInfo.characterName,
+      classId: this.characterInfo.classId,
+    };
+
+    this.activeCharacter =
+      new Player.PlayerCharacter(characterInfo);
+  }
 
 }

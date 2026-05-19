@@ -7,3 +7,4 @@ export * from "./CharacterCreationState";
 export * from "./GameView";
 export * from "./GameModal";
 export * from "./GameActionResult";
+export * from "./MainMenuState";
