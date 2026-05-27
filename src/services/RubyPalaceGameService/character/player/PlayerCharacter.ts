@@ -1,4 +1,6 @@
-import { IPlayerCharacter, CharacterStats, ICharacterClass, CharacterInfo, CharacterClassRegistry, createEmptyStats } from "./index";
+import { IPlayerCharacter} from "./IPlayerCharacter";
+import { CharacterStats, CharacterInfo, createEmptyStats} from "../CharacterStats";
+import { CharacterClassRegistry, IPlayerClass, CharacterClassId} from "./playerClasses";
 
 export class PlayerCharacter implements IPlayerCharacter {
   private id: string;
@@ -6,7 +8,7 @@ export class PlayerCharacter implements IPlayerCharacter {
 
   private characterName: string;
 
-  private playerClass: ICharacterClass;
+  private playerClass: IPlayerClass;
 
   private currentHP: number;
   private currentMP: number;
@@ -46,6 +48,9 @@ export class PlayerCharacter implements IPlayerCharacter {
   this.clampResources();
 }
 
+public static create(characterInfo: CharacterInfo): IPlayerCharacter{
+  return new PlayerCharacter(characterInfo);
+}
 
 private clampResources(): void {
   this.currentHP = Math.min(this.currentHP, this.getMaxHP());
@@ -63,6 +68,12 @@ private clampResources(): void {
 
   public getUserId(): string {
     return this.userId;
+  }
+  public getClassId(): CharacterClassId {
+    return this.playerClass.getId();
+  }
+  public getPlayerClass(): IPlayerClass {
+    return CharacterClassRegistry.create(this.getClassId())
   }
 
   public getCharacterName(): string {
@@ -176,9 +187,7 @@ private clampResources(): void {
     this.clampResources();
   }
 
-  public getPlayerClass(): ICharacterClass {
-    return this.playerClass;
-  }
+  
   public getLevel(): number {
     return this.level;
   }
@@ -198,4 +207,6 @@ private clampResources(): void {
   public isDead(): boolean {
     return this.currentHP <= 0;
   }
+
+
 }

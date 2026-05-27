@@ -1,6 +1,6 @@
 // CharacterClassRegistry.ts
 
-import { ICharacterClass } from "./ICharacterClass";
+import { IPlayerClass } from "./IPlayerClass";
 import { BaseClass } from "./BaseClass";
 const REGISTERED_CLASSES = {
   base: BaseClass,
@@ -13,14 +13,14 @@ export class CharacterClassRegistry {
     return Object.keys(REGISTERED_CLASSES) as CharacterClassId[];
   }
 
-  public static create(classId: CharacterClassId): ICharacterClass {
+  public static create(classId: CharacterClassId): IPlayerClass {
     const ClassConstructor = REGISTERED_CLASSES[classId];
 
     return new ClassConstructor();
   }
 
 
-  public static getAvailableClasses(): ICharacterClass[] {
+  public static getAvailableClasses(): IPlayerClass[] {
     return this.getAvailableClassIds().map((classId) =>
       this.create(classId)
     );

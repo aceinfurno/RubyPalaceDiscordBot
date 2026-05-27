@@ -1,9 +1,9 @@
-import {
-  IGameState,
-  IGameSession,
-  GameView,
-  GameActionResult,
-} from "./index";
+import { IGameState, GameActionResult } from "../IGameState";
+import { IGameSession } from "../../IGameSession";
+import { GameView } from "../rendering";
+import { StateRegistry } from "./stateRegistry";
+import * as Enemy from "../../../character/enemies"
+
 
 export class MainMenuState implements IGameState {
   public readonly id = "main_menu";
@@ -67,7 +67,11 @@ export class MainMenuState implements IGameState {
     }
 
     if (action === "go_test_battle") {
-      //session.setState("test_battle");
+      const enemies = [
+        Enemy.EnemyRegistry.getEnemy("goblin"),
+        Enemy.EnemyRegistry.getEnemy("goblin"),
+      ]
+      session.setState( StateRegistry.createBattle(enemies, session) );
       return { type: "render" };
     }
 

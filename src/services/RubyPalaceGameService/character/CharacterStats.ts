@@ -1,4 +1,4 @@
-import { CharacterClassId} from "./index";
+import { CharacterClassId} from "./player";
 export type StatName =
   | "strength"
   | "dexterity"

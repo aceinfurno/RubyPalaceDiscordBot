@@ -1,15 +1,6 @@
-import {ICharacterClass, CharacterStats} from "./index"
-export interface IPlayerCharacter {
+export interface ICharacter {
   getId(): string;
-  getUserId(): string;
-
   getCharacterName(): string;
-  getPlayerClass(): ICharacterClass;
-
-  getGold(): number;
-  getLevel(): number;
-  getExperience(): number;
-  getUnspentStatPoints(): number;
 
   getMaxHP(): number;
   getCurrentHP(): number;
@@ -29,7 +20,6 @@ export interface IPlayerCharacter {
 
   takeDamage(amount: number): void;
   heal(amount: number): void;
-
   fullRestore(): void;
 
   spendMana(amount: number): boolean;

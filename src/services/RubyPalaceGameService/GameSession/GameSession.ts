@@ -1,13 +1,13 @@
 import { IGameState, IGameSession, GameActionResult } from "./index";
-import * as Player from "../character";
+import { PlayerCharacter, IPlayerCharacter, CharacterInfo} from "../character";
 
 export class GameSession implements IGameSession {
   public readonly userId: string;
   public readonly createdAt: Date;
   public lastActiveAt: Date;
   private state: IGameState;
-  private characterInfo: Partial<Player.CharacterInfo> = {};
-  private activeCharacter: Player.PlayerCharacter | undefined;
+  private characterInfo: Partial<CharacterInfo> = {};
+  private activeCharacter: IPlayerCharacter | undefined;
 
   constructor(userId: string, startingState: IGameState ) {
     this.userId = userId;
@@ -40,17 +40,17 @@ export class GameSession implements IGameSession {
 
     return session;
   }
-  public getCharacterInfo(): Partial<Player.CharacterInfo> {
+  public getCharacterInfo(): Partial<CharacterInfo> {
     return this.characterInfo;
   };
 
-  public setCharacterInfo(draft: Partial<Player.CharacterInfo>): void{
+  public setCharacterInfo(draft: Partial<CharacterInfo>): void{
     this.characterInfo = draft;
   }
-  public getPlayerCharacter(): Player.PlayerCharacter | undefined{
+  public getPlayerCharacter(): IPlayerCharacter | undefined{
     return this.activeCharacter
   }
-  public setPlayerCharacter(character: Player.PlayerCharacter){
+  public setPlayerCharacter(character: IPlayerCharacter){
     this.activeCharacter = character;
   }
 
@@ -62,7 +62,7 @@ export class GameSession implements IGameSession {
       throw new Error("Character creation draft is incomplete.");
     }
 
-    const characterInfo: Player.CharacterInfo = {
+    const characterInfo: CharacterInfo = {
       id: crypto.randomUUID(),
       userId: this.userId,
 
@@ -71,7 +71,7 @@ export class GameSession implements IGameSession {
     };
 
     this.activeCharacter =
-      new Player.PlayerCharacter(characterInfo);
+      PlayerCharacter.create(characterInfo);
   }
 
 }

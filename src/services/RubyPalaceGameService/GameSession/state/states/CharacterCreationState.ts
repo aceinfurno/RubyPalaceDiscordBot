@@ -1,5 +1,8 @@
-import { IGameState, IGameSession, GameView, GameActionResult, MainMenuState } from "./index";
-import * as Player from "../character";
+import { IGameState, GameActionResult } from "../IGameState";
+import { IGameSession } from "../../IGameSession";
+import { GameView } from "../rendering";
+import { StateRegistry } from "./stateRegistry";
+import { CharacterClassRegistry, CharacterClassId }from "../../../character";
 
 
 export class CharacterCreationState implements IGameState {
@@ -35,7 +38,7 @@ export class CharacterCreationState implements IGameState {
     }
 
     if (!draft.classId) {
-      const availableClasses = Player.CharacterClassRegistry.getAvailableClasses();
+      const availableClasses = CharacterClassRegistry.getAvailableClasses();
 
       return {
         title: "Character Creation",
@@ -63,7 +66,7 @@ export class CharacterCreationState implements IGameState {
       };
     }
 
-    const selectedClass = Player.CharacterClassRegistry.create(draft.classId);
+    const selectedClass = CharacterClassRegistry.create(draft.classId);
 
     return {
       title: "Confirm Character",
@@ -134,7 +137,7 @@ export class CharacterCreationState implements IGameState {
   if (action.startsWith("choose_character_class:")) {
   const classId = action.slice(
     "choose_character_class:".length
-  ) as Player.CharacterClassId;
+  ) as CharacterClassId;
 
   session.setCharacterInfo({
     ...draft,
@@ -151,7 +154,7 @@ export class CharacterCreationState implements IGameState {
 
   if (action === "confirm_character_creation") {
     await session.createCharacterFromDraft();
-    session.setState(new MainMenuState());
+    session.setState( StateRegistry.create("main_menu"));
     return { type: "render" };
   }
 

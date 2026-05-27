@@ -1,7 +1,7 @@
 import { InteractionUpdateOptions } from "discord.js";
 import { IGameService } from "../IGameService";
 import { PlayerSaveRepository} from "./player/PlayerSaveRepository";
-import { GameSession, StartMenuState, IGameSession } from "./GameSession";
+import { GameSession, IGameSession, StateRegistry, GameStateId } from "./GameSession";
 import { DiscordGameRenderer, DiscordPayload } from "./renderer";
 import { PlayCommand } from "./PlayCommand";
 import { ICommand } from "../../commands/ICommand";
@@ -9,7 +9,7 @@ import { ICommand } from "../../commands/ICommand";
 export class RubyPalaceGameService implements IGameService {
   public readonly keyword = "rp"
 
-  private startingState = StartMenuState;
+  private startingState: GameStateId = "start_menu";
 
   private activeSessions: Map<string, GameSession> = new Map();
 
@@ -42,7 +42,7 @@ export class RubyPalaceGameService implements IGameService {
   const savedPlayer = await this.playerRepository.findByUserId(userId);
 
   // Create Session
-  const startingState = new this.startingState();
+  const startingState = StateRegistry.create(this.startingState);
   const session = savedPlayer
     ? GameSession.fromSave(userId, savedPlayer, startingState)
     : GameSession.createNew(userId, startingState);

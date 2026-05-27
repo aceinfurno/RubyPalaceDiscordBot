@@ -1,11 +1,12 @@
-import {ICharacterClass} from "./ICharacterClass";
-import { CharacterStats, CharacterResources } from "./CharacterStats";
+import {IPlayerClass} from "./IPlayerClass";
+import {CharacterClassId} from "./CharacterClassRegistry";
+import { CharacterStats, CharacterResources } from "../../CharacterStats";
 
-export class BaseClass implements ICharacterClass {
+export class BaseClass implements IPlayerClass {
   private baseStats: CharacterStats;
   private baseResources: CharacterResources;
   private name = "Base Class";
-  private id = "base";
+  private id: CharacterClassId = "base";
   private description = "Designed for initial testing and prototyping.";
   constructor() {
     this.baseStats = {
@@ -32,7 +33,7 @@ export class BaseClass implements ICharacterClass {
   public getName(): string {
     return this.name;
   }
-  public getId(): string{
+  public getId(): CharacterClassId{
     return this.id;
   }
   public getDescription(): string {

@@ -1,10 +1,7 @@
-import {
-  IGameState,
-  GameView,
-  IGameSession,
-  CharacterCreationState,
-  GameActionResult,
-} from "./index";
+import { IGameState, GameActionResult } from "../IGameState";
+import { IGameSession } from "../../IGameSession";
+import { GameView } from "../rendering";
+import { StateRegistry } from "./stateRegistry";
 
 export class StartMenuState implements IGameState {
   public readonly id = "start_menu";
@@ -38,7 +35,7 @@ export class StartMenuState implements IGameState {
     switch (action) {
 
       case "new_character":
-        session.setState(new CharacterCreationState());
+        session.setState(StateRegistry.create("character_creation"));
 
         return {
           type: "render",
