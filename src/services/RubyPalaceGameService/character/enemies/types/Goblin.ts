@@ -1,6 +1,7 @@
 // character/enemies/types/Goblin.ts
 
 import { EnemyCharacter } from "../EnemyCharacter";
+import { BattleActionRequest, BattleContext, ActionId } from "../../../GameSession";
 
 export class Goblin extends EnemyCharacter {
   constructor() {
@@ -25,5 +26,14 @@ export class Goblin extends EnemyCharacter {
       experienceReward: 10,
       goldReward: 5,
     });
+  }
+  public chooseAction(context: BattleContext): BattleActionRequest {
+    const response: BattleActionRequest = {
+      action: "basic_attack",
+      targetIds: []
+    }
+    const target = context.getPlayerId();
+    response.targetIds.push(target);
+    return response
   }
 }

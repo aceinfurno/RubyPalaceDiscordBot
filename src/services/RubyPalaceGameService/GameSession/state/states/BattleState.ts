@@ -5,11 +5,16 @@ import { IGameSession } from "../../IGameSession";
 import { GameView, GameControl } from "../rendering";
 import { BattleManager, BattlePhase, ActionRegistry, BattleActionTargetType } from "../battle";
 import { IEnemyCharacter } from "../../../character";
+type BattleScreen =
+  | "action_select"
+  | "skill_select"
+  | "item_select";
 
 export class BattleState implements IGameState {
   public readonly id = "battle";
 
   private battleManager: BattleManager;
+  private battleScreen: BattleScreen;
 
 
   constructor(
@@ -29,6 +34,7 @@ export class BattleState implements IGameState {
       enemies,
       player
     );
+    this.battleScreen = "action_select";
   }
 
   public getView(session: IGameSession): GameView {
@@ -37,22 +43,27 @@ export class BattleState implements IGameState {
       description: "",
       controls: [],
     }
-    gameView.description += this.formatBattleLog() + this.mainDisplay(session);
+    gameView.description += this.formatBattleLog() + '\n\n' + this.mainDisplay(session);
     const battlePhase = this.battleManager.getBattlePhase();
-    switch (this.battleManager.getBattlePhase() ) {
+    switch (battlePhase ) {
       case "action_select":
-        gameView.controls = this.getPlayerControls();
-        break;
+        switch (this.battleScreen) {
+          case "action_select":
+          gameView.controls = this.getPlayerControls();
+          break;
 
-      case "skill_select":
-        gameView.description += `Choose a skill.\n\n`;
-        gameView.controls = this.getSkillControls(session);
-        break;
+          case "skill_select":
+            gameView.description += `Choose a skill.\n\n`;
+            gameView.controls = this.getSkillControls(session);
+            break;
 
-      //case "item_select":
-        //gameView.description += `Choose an item.\n\n`;
-        //gameView.controls = this.getItemControls();
-        //break;
+          //case "item_select":
+            //gameView.description += `Choose an item.\n\n`;
+            //gameView.controls = this.getItemControls();
+            //break;
+
+        }
+        break;
 
       case "target_select":
         gameView.description += `Choose a target.\n\n`;
@@ -223,25 +234,24 @@ return controls;
   ): Promise<GameActionResult> {
     if (action === "battle_basic_attack") {
        this.battleManager.selectAction("basic_attack");
+       this.battleManager.continuePlayerTurn();
       return { type: "render" };
     }
     if (action.startsWith("battle_select_action:")) {
       const actionId = ActionRegistry.validateAction(action.replace("battle_select_action:", ""));
       console.log(actionId);
       this.battleManager.selectAction(actionId);
+      this.battleManager.continuePlayerTurn();
 
       return { type: "render" };
     }
     if (action === "battle_skills") {
-      this.battleManager.setBattlePhase("skill_select");
-      return { type: "render" };
-    }
-
-    if (action === "battle_abilities") {
+      this.battleScreen = "skill_select";
       return { type: "render" };
     }
 
     if (action === "battle_items") {
+      this.battleScreen = "item_select";
       return { type: "render" };
     }
 
@@ -257,13 +267,14 @@ return controls;
     }
 
     if (action === "battle_confirm_targets") {
-      this.battleManager.confirmSelectedTargets();
+      this.battleManager.continuePlayerTurn();
 
       return { type: "render" };
     }
 
     if (action === "battle_back_to_skills") {
       this.battleManager.cancelTargetSelection();
+      this.battleScreen = "skill_select";
 
       return { type: "render" };
     }

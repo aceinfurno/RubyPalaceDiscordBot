@@ -1,12 +1,53 @@
 import {IEnemyCharacter, IPlayerCharacter, ICharacter} from "../../../character";
 import { ActionId, IBattleAction, ActionRegistry } from "./actions";
 export type BattlePhase =
-  | "resolving"
   | "action_select"
-  | "skill_select"
   | "target_select"
-  | "confirm_action"
   | "battle_over";
+export interface BattleActionRequest {
+  action: ActionId;
+  targetIds: string[];
+}
+export class BattleContext {
+  constructor (
+    private readonly battlers: ICharacter[],
+    private readonly currentActor: ICharacter
+  ) {}
+  public getCurrentActor(): ICharacter {
+    return this.currentActor;
+  }
+  public getPlayerId(): string {
+    const player = this.battlers.find(
+      battler => battler.isPlayerControlled() && !battler.isDead()
+    );
+
+    if (!player) {
+      throw new Error("No living player found.");
+    }
+
+    return player.getId();
+  }
+
+  public getBattlers(): ICharacter[] {
+    return [...this.battlers];
+  }
+
+  public getLivingPlayers(): ICharacter[] {
+    return this.battlers.filter(
+      battler =>
+        battler.isPlayerControlled() &&
+        !battler.isDead()
+    );
+  }
+
+  public getLivingEnemies(): ICharacter[] {
+    return this.battlers.filter(
+      battler =>
+        !battler.isPlayerControlled() &&
+        !battler.isDead()
+    );
+  }
+}
 export class BattleManager{
   private turnQueue: ICharacter[];
   private currentActor: ICharacter;
@@ -14,13 +55,14 @@ export class BattleManager{
   private selectedAction: IBattleAction | undefined;
   private battleLog: string[] = [];
   private defeatedEnemies: IEnemyCharacter[] = [];
+  private selectedTargetIds: string[] = [];
 
   constructor(enemies: IEnemyCharacter[], activePlayer: IPlayerCharacter) {
     this.turnQueue = [...enemies];
     this.turnQueue.push(activePlayer);
+    this.battlePhase = "action_select";
     this.setInitiative();
     this.currentActor = this.ensureActor(this.turnQueue.shift());
-    this.battlePhase = "resolving";
     this.addBattleLog("Battle started!");
     this.advanceUntilPlayerTurn()
   }
@@ -30,33 +72,40 @@ export class BattleManager{
     }
     return currentActor;
   }
-  public confirmSelectedTargets(): void {
+  public continuePlayerTurn(): void {
+
     if (!this.selectedAction) {
-      throw new Error("Cannot confirm targets without a selected action.");
+      this.battlePhase = "action_select";
+      return;
     }
 
-    if (this.selectedTargetIds.length === 0) {
-      throw new Error("Cannot confirm action without selecting a target.");
+    if (this.needsTargets() && this.selectedTargetIds.length === 0) {
+      this.battlePhase = "target_select";
+      return;
     }
 
+    this.executeAction();
+    this.endTurn();
+    this.advanceUntilPlayerTurn();
+}
+
+  private executeAction(): void {
+    if (!this.selectedAction) {
+      throw new Error("Cannot execute without selected action.");
+    }
+
+    const action = this.selectedAction;
     const targets = this.getSelectedTargetCharacters();
 
     for (const target of targets) {
-      const result = this.selectedAction.execute(
-        this.currentActor,
-        target
-      );
+      const result = action.execute(this.currentActor, target);
 
       this.addBattleLog(result.message);
     }
 
-    this.selectedAction = undefined;
-    this.selectedTargetIds = [];
-
-    this.battlePhase = "resolving";
 
     this.cleanupAfterAction();
-}
+  }
   private setInitiative(){
     const initiativeOrder = this.turnQueue.map(battler =>
       ({
@@ -88,24 +137,20 @@ export class BattleManager{
   public getBattlePhase(): BattlePhase {
     return this.battlePhase;
   }
-  public advanceUntilPlayerTurn(): void {
-    if (this.battlePhase !== "resolving") {
-      return;
-    }
+  private advanceUntilPlayerTurn(): void {
+    while (true) {
 
-    while (this.battlePhase === "resolving") {
       if (this.isBattleOver()) {
         this.battlePhase = "battle_over";
         return;
       }
-
+      this.startTurn();
       if (this.currentActor.isPlayerControlled()) {
-        this.startPlayerTurn();
+        this.continuePlayerTurn();
         return;
       }
 
       this.executeEnemyTurn();
-      this.endTurn();
     }
 }
   public getSelectedAction(): IBattleAction {
@@ -121,29 +166,11 @@ export class BattleManager{
       throw new Error("No action assigned to Battle Manager");
     }
     this.selectedAction = selectedAction;
-    if (selectedAction.getTargetType() === "self") {
-      this.battlePhase = "confirm_action";
-      return;
-    }
-
-    if (selectedAction.getTargetType() === "enemy") {
-      this.battlePhase = "target_select";
-      return;
-    }
-
-    if (selectedAction.getTargetType() === "all_enemies") {
-      this.battlePhase = "confirm_action";
-      return;
-    }
-
-    throw new Error(
-      `Unhandled target type: ${selectedAction.getTargetType()}`
-    );
   }
   private getAction(actionId: ActionId): IBattleAction{
     return ActionRegistry.createAction(actionId);
   }
-  private selectedTargetIds: string[] = [];
+
 
   public getSelectedTargets(): string[] {
     return this.selectedTargetIds;
@@ -175,7 +202,8 @@ export class BattleManager{
   }
   public cancelTargetSelection(): void {
     this.selectedTargetIds = [];
-    this.battlePhase = "skill_select";
+    this.selectedAction = undefined;
+    this.battlePhase = "action_select";
   }
   public getValidTargetsForSelectedAction(): ICharacter[] {
   if (!this.selectedAction) {
@@ -206,8 +234,7 @@ export class BattleManager{
 
   throw new Error(`Target type ${targetType} does not use manual target selection.`);
 }
-  private startPlayerTurn(): void {
-    this.battlePhase = "action_select";
+  private startTurn(): void {
     this.addBattleLog(`${this.currentActor.getCharacterName()}'s turn.`);
   }
   private advanceTurn(): void{
@@ -221,7 +248,17 @@ export class BattleManager{
     this.currentActor = nextActor;
   }
   public executeEnemyTurn(): void{
-    
+    if (this.currentActor.isPlayerControlled()) {
+      throw new Error("Tried to execute enemy turn for player.");
+    }
+
+    const enemy = this.currentActor as IEnemyCharacter;
+    const request = enemy.chooseAction(this.getBattleContext());
+
+    this.selectedAction = this.getAction(request.action);
+    this.selectedTargetIds = request.targetIds;
+    this.executeAction();
+    this.endTurn();
   }
   public getCurrentBattler(): ICharacter{
     return this.currentActor;
@@ -242,16 +279,10 @@ export class BattleManager{
 }
 
   private cleanupAfterAction(): void {
-    this.processDefeatedBattlers();
-
-    if (this.isBattleOver()) {
-      this.battlePhase = "battle_over";
-      return;
-    }
-
-    this.advanceTurn();
-    this.advanceUntilPlayerTurn();
+    this.selectedAction = undefined;
+    this.selectedTargetIds = [];
 }
+
 
   private processDefeatedBattlers(): void {
     const allBattlers = this.getAllBattlers();
@@ -272,12 +303,7 @@ export class BattleManager{
       battler => !battler.isDead()
   );
   }
-  private beginTurn(): void {
 
-  }
-  private executeTurn(): void {
-
-  }
   private endTurn(): void {
     this.processDefeatedBattlers();
 
@@ -305,6 +331,16 @@ export class BattleManager{
         !battler.isPlayerControlled() && !battler.isDead()
       );
     }
+  private getBattleContext(): BattleContext{
+    return new BattleContext(this.getAllBattlers(), this.currentActor);
+  }
+  private needsTargets(): boolean {
+    if (!this.selectedAction) {
+      return false;
+    }
+
+    return this.selectedAction.getTargetType() !== "self";
+  }
   private roll(min: number, max: number): number {
     return Math.floor(Math.random() * (max - min + 1)) + min;
   }

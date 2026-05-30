@@ -1,7 +1,7 @@
 // character/enemies/EnemyCharacter.ts
 
 import { IEnemyCharacter } from "./IEnemyCharacter";
-import { ActionId} from "../../GameSession";
+import { ActionId, BattleContext, BattleActionRequest } from "../../GameSession";
 import {
   CharacterStats,
   CharacterResources,
@@ -210,5 +210,11 @@ export abstract class EnemyCharacter
   }
   public getEvasion(): number {
     return 0;
+  }
+  public chooseAction(context: BattleContext): BattleActionRequest{
+    return {
+    action: "basic_attack",
+    targetIds: [],
+  };
   }
 }
