@@ -9,4 +9,5 @@ export interface IPlayerCharacter extends ICharacter {
   getExperience(): number;
   getGold(): number;
   getUnspentStatPoints(): number;
+  
 }

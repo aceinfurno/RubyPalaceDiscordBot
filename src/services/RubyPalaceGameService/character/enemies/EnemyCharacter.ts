@@ -1,12 +1,12 @@
 // character/enemies/EnemyCharacter.ts
 
 import { IEnemyCharacter } from "./IEnemyCharacter";
-
+import { ActionId} from "../../GameSession";
 import {
   CharacterStats,
   CharacterResources,
   CurrentResources,
-} from "../index";
+} from "../CharacterStats";
 
 type EnemyCharacterArgs = {
   id?: string;
@@ -138,7 +138,7 @@ export abstract class EnemyCharacter
     this.currentResources.currentSP = this.getMaxSP();
   }
 
-  public spendMana(amount: number): boolean {
+  public spendMP(amount: number): boolean {
     if (this.currentResources.currentMP < amount) {
       return false;
     }
@@ -148,7 +148,7 @@ export abstract class EnemyCharacter
     return true;
   }
 
-  public restoreMana(amount: number): void {
+  public restoreMP(amount: number): void {
     this.currentResources.currentMP = Math.min(
       this.getMaxMP(),
       this.currentResources.currentMP + amount
@@ -182,5 +182,33 @@ export abstract class EnemyCharacter
 
   public getGoldReward(): number {
     return this.goldReward;
+  }
+  public isPlayerControlled(): boolean {
+    return false;
+  }
+
+  public getSkillIds(): ActionId[]{
+    return ["power_strike"];
+  }
+  public getATK(): number {
+    return Math.floor(this.getStrength() * 1.3) + Math.floor(this.getDexterity() * .25);// + this.getWAP();
+  }
+  public getRangedATK(): number {
+    return this.getStrength() + Math.floor(this.getLuck() * .3) + Math.floor(this.getDexterity() * .2);// + this.getWAP();
+  }
+  public getMagic(): number {
+    return Math.floor(1.3 * this.getIntelligence()) + Math.floor(.2 * this.getWisdom());// + this.getWAP();
+  }
+  public getDEF(): number {
+    return this.getConstitution();// this.getArmDef();
+  }
+  public getResist(): number {
+    return this.getWisdom(); //+ this.getArmRes();
+  }
+  public getAccuracy(): number {
+    return 0;
+  }
+  public getEvasion(): number {
+    return 0;
   }
 }

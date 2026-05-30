@@ -1,6 +1,7 @@
 import { IPlayerCharacter} from "./IPlayerCharacter";
 import { CharacterStats, CharacterInfo, createEmptyStats} from "../CharacterStats";
 import { CharacterClassRegistry, IPlayerClass, CharacterClassId} from "./playerClasses";
+import { ActionId} from "../../GameSession";
 
 export class PlayerCharacter implements IPlayerCharacter {
   private id: string;
@@ -152,10 +153,10 @@ private clampResources(): void {
   }
 
   // =========================
-  // Mana Functions
+  // MP Functions
   // =========================
 
-  public spendMana(amount: number): boolean {
+  public spendMP(amount: number): boolean {
     if (this.currentMP < amount) {
       return false;
     }
@@ -164,7 +165,7 @@ private clampResources(): void {
     return true;
   }
 
-  public restoreMana(amount: number): void {
+  public restoreMP(amount: number): void {
     this.currentMP += amount;
     this.clampResources();
   }
@@ -187,7 +188,7 @@ private clampResources(): void {
     this.clampResources();
   }
 
-  
+
   public getLevel(): number {
     return this.level;
   }
@@ -206,6 +207,37 @@ private clampResources(): void {
 
   public isDead(): boolean {
     return this.currentHP <= 0;
+  }
+  public isPlayerControlled(): boolean{
+    return true;
+  }
+
+  // =========================
+  // Combat Functions
+  // =========================
+  public getSkillIds(): ActionId[]{
+    return ["power_strike"];
+  }
+  public getATK(): number {
+    return Math.floor(this.getStrength() * 1.3) + Math.floor(this.getDexterity() * .25);// + this.getWAP();
+  }
+  public getRangedATK(): number {
+    return this.getStrength() + Math.floor(this.getLuck() * .3) + Math.floor(this.getDexterity() * .2);// + this.getWAP();
+  }
+  public getMagic(): number {
+    return Math.floor(1.3 * this.getIntelligence()) + Math.floor(.2 * this.getWisdom());// + this.getWAP();
+  }
+  public getDEF(): number {
+    return this.getConstitution();// this.getArmDef();
+  }
+  public getResist(): number {
+    return this.getWisdom(); //+ this.getArmRes();
+  }
+  public getAccuracy(): number {
+    return 0;
+  }
+  public getEvasion(): number {
+    return 0;
   }
 
 
