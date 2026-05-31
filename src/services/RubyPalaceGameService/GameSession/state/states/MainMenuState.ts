@@ -71,7 +71,7 @@ export class MainMenuState implements IGameState {
         Enemy.EnemyRegistry.getEnemy("goblin"),
         Enemy.EnemyRegistry.getEnemy("goblin"),
       ]
-      session.setState( StateRegistry.createBattle(enemies, session) );
+      session.pushState( StateRegistry.createBattle(enemies, session) );
       return { type: "render" };
     }
 

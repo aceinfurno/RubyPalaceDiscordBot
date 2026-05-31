@@ -5,7 +5,7 @@ export class GameSession implements IGameSession {
   public readonly userId: string;
   public readonly createdAt: Date;
   public lastActiveAt: Date;
-  private state: IGameState;
+  private stateStack: IGameState[] = [];
   private characterInfo: Partial<CharacterInfo> = {};
   private activeCharacter: IPlayerCharacter | undefined;
 
@@ -13,21 +13,36 @@ export class GameSession implements IGameSession {
     this.userId = userId;
     this.createdAt = new Date();
     this.lastActiveAt = new Date();
-    this.state = startingState;
+    this.stateStack.push(startingState);
   }
 
   public touch(): void {
     this.lastActiveAt = new Date();
   }
-  public getState(): IGameState {
-    return this.state;
+  public getCurrentState(): IGameState {
+    const state = this.stateStack[this.stateStack.length - 1];
+
+    if (!state) {
+      throw new Error("No active game state.");
+    }
+
+    return state;
+  }
+  public pushState(state: IGameState): void {
+    this.stateStack.push(state);
+  }
+  public popState(): void {
+    if (this.stateStack.length <= 1) {
+      throw new Error("Cannot pop the final state.");
+    }
+    this.stateStack.pop();
   }
   public setState(state: IGameState): void {
-    this.state = state;
-    this.touch();
-}
+    this.stateStack = [state];
+  }
   public async handleAction(action: string): Promise<GameActionResult> {
-    return await this.state.handleAction(action, this);
+    const currentState = this.getCurrentState();
+    return await currentState.handleAction(action, this);
 }
   static createNew(userId: string, startingState: IGameState): GameSession {
     return new GameSession(userId, startingState);

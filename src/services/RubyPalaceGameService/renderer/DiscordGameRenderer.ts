@@ -45,7 +45,7 @@ export class DiscordGameRenderer {
     session: IGameSession
   ): Promise<DiscordPayload<unknown>> {
 
-    const state = session.getState();
+    const state = session.getCurrentState();
 
     const view = state.getView(session);
 

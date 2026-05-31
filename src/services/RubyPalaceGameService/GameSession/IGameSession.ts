@@ -8,7 +8,9 @@ export interface IGameSession {
 
   touch(): void;
 
-  getState(): IGameState;
+  getCurrentState(): IGameState;
+  pushState(state: IGameState): void;
+  popState(): void;
 
   setState(state: IGameState): void;
 

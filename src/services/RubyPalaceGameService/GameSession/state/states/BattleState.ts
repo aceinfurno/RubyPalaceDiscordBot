@@ -5,6 +5,7 @@ import { IGameSession } from "../../IGameSession";
 import { GameView, GameControl } from "../rendering";
 import { BattleManager, BattlePhase, ActionRegistry, BattleActionTargetType } from "../battle";
 import { IEnemyCharacter } from "../../../character";
+import { StateRegistry, GameStateId } from "./stateRegistry";
 type BattleScreen =
   | "action_select"
   | "skill_select"
@@ -43,8 +44,10 @@ export class BattleState implements IGameState {
       description: "",
       controls: [],
     }
-    gameView.description += this.formatBattleLog() + '\n\n' + this.mainDisplay(session);
     const battlePhase = this.battleManager.getBattlePhase();
+    if (battlePhase !== "battle_over"){
+    gameView.description += this.formatBattleLog() + '\n\n' + this.mainDisplay(session);
+
     switch (battlePhase ) {
       case "action_select":
         switch (this.battleScreen) {
@@ -70,6 +73,13 @@ export class BattleState implements IGameState {
         gameView.controls = this.getTargetControls();
         break;
       }
+    }
+    else {
+      if (this.battleManager.playerWon()) {
+        return this.getVictoryView(session);
+      }
+      return this.getDefeatView(session);
+    }
     return gameView;
 }
   private mainDisplay(session: IGameSession): string{
@@ -228,6 +238,38 @@ private getSkillControls(session: IGameSession): GameControl[] {
 
 return controls;
 }
+  private getVictoryView(session: IGameSession): GameView {
+    return {
+      title: "Victory!",
+      description: "\n\n" + this.formatRewards(session) + "\n\n",
+      controls: [
+        {
+          type: "button",
+          action: "battle_victory_continue",
+          label: "Continue",
+          style: "primary",
+        },
+      ],
+    };
+  }
+  private formatRewards(session: IGameSession): string{
+    return "FIXME!!! BattleState.formatRewards()"
+  }
+
+  private getDefeatView(session: IGameSession): GameView {
+    return {
+      title: "Defeat...",
+      description: this.formatBattleLog() + "\n\n" + "You were defeated.",
+      controls: [
+        {
+          type: "button",
+          action: "battle_defeat_continue",
+          label: "Continue",
+          style: "primary",
+        },
+      ],
+    };
+  }
   public async handleAction(
     action: string,
     session: IGameSession
@@ -268,7 +310,7 @@ return controls;
 
     if (action === "battle_confirm_targets") {
       this.battleManager.continuePlayerTurn();
-
+      this.battleScreen = "action_select";
       return { type: "render" };
     }
 
@@ -276,6 +318,21 @@ return controls;
       this.battleManager.cancelTargetSelection();
       this.battleScreen = "skill_select";
 
+      return { type: "render" };
+    }
+    if (action === "battle_back") {
+      this.battleScreen = "action_select";
+
+      return { type: "render" };
+    }
+    if (action === "battle_victory_continue") {
+      session.popState();
+
+      return { type: "render" };
+    }
+
+    if (action === "battle_defeat_continue") {
+      session.setState(StateRegistry.create("main_menu"));
       return { type: "render" };
     }
 

@@ -341,6 +341,12 @@ export class BattleManager{
 
     return this.selectedAction.getTargetType() !== "self";
   }
+  public playerWon(): boolean {
+    return this.getAllBattlers().some(
+      battler => battler.isPlayerControlled() && !battler.isDead()
+    );
+  }
+
   private roll(min: number, max: number): number {
     return Math.floor(Math.random() * (max - min + 1)) + min;
   }
