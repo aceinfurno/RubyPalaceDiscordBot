@@ -1,5 +1,6 @@
 import { ICharacter, CharacterStat } from "../../../../character";
-import { ActionId } from "./ActionRegistry"
+import { ActionId } from "./ActionRegistry";
+import { BattleContext } from "../BattleManager";
 export type DamageType =
   | "physical"
   | "fire"
@@ -72,15 +73,14 @@ export type BattleActionKeyword =
 
   export interface IBattleAction {
     getId(): ActionId;
-
     getName(): string;
 
     getDescription(): string;
-
+    canUse(context: BattleContext, targets: string[]): boolean;
     getTargetType(): BattleActionTargetType;
     getMaxTargets(): number;
     execute(
       user: ICharacter,
-      target: ICharacter
+      targets: ICharacter[]
     ): BattleActionResult;
   }

@@ -1,6 +1,8 @@
 import { ICharacter } from "../ICharacter";
 import { CharacterStats } from "../CharacterStats";
 import { IPlayerClass, CharacterClassId } from  "./playerClasses";
+import { RewardBundle } from "../../GameSession";
+import {Inventory} from "../../items";
 export interface IPlayerCharacter extends ICharacter {
   getUserId(): string;
   getClassId(): CharacterClassId;
@@ -9,5 +11,6 @@ export interface IPlayerCharacter extends ICharacter {
   getExperience(): number;
   getGold(): number;
   getUnspentStatPoints(): number;
-  
+  receiveRewards(rewards: RewardBundle): void;
+
 }

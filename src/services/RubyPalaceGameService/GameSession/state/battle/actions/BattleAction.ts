@@ -1,6 +1,7 @@
 import { ICharacter, CharacterStat } from "../../../../character";
 import { IBattleAction, BattleActionResult, BattleActionTargetType, BattleActionConfig } from "./IBattleAction";
 import { ActionId } from "./ActionRegistry";
+import { BattleContext } from "../BattleManager";
 export abstract class BattleAction implements IBattleAction {
   protected constructor(
     protected readonly config: BattleActionConfig
@@ -9,7 +10,6 @@ export abstract class BattleAction implements IBattleAction {
   public getId(): ActionId {
     return this.config.id;
   }
-
   public getName(): string {
     return this.config.name;
   }
@@ -24,34 +24,42 @@ export abstract class BattleAction implements IBattleAction {
   public getMaxTargets(): number{
     return this.config.targeting?.maxTargets ?? 1;
   }
+  public canUse(context: BattleContext, targets: string[]): boolean {
+    return true;
+  }
 
   public execute(
     user: ICharacter,
-    target: ICharacter
+    targets: ICharacter[]
   ): BattleActionResult {
     this.validateResources(user);
-
     this.spendResources(user);
 
-    let message = `${user.getCharacterName()} uses ${this.getName()} on ${target.getCharacterName()}.`;
+    const messages: string[] = [];
 
-    if (this.config.damage) {
-      const damage = this.calculateDamage(user, target);
-      target.takeDamage(damage);
+    for (const target of targets) {
+      let message = `${user.getCharacterName()} uses ${this.getName()} on ${target.getCharacterName()}.`;
 
-      message += ` ${target.getCharacterName()} takes ${damage} damage.`;
-    }
+      if (this.config.damage) {
+        const damage = this.calculateDamage(user, target);
+        target.takeDamage(damage);
 
-    if (this.config.healing) {
-      const healing = this.calculateHealing(user);
-      target.heal(healing);
+        message += ` ${target.getCharacterName()} takes ${damage} damage.`;
+      }
 
-      message += ` ${target.getCharacterName()} recovers ${healing} HP.`;
-    }
+      if (this.config.healing) {
+        const healing = this.calculateHealing(user);
+        target.heal(healing);
+
+        message += ` ${target.getCharacterName()} recovers ${healing} HP.`;
+      }
+
+      messages.push(message);
+ }
 
     return {
-      message,
-      defeated: target.getCurrentHP() <= 0,
+      message: messages.join("\n"),
+      defeated: targets.some(target => target.getCurrentHP() <= 0),
     };
   }
 

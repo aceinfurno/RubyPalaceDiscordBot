@@ -7,6 +7,7 @@ import {
   CharacterResources,
   CurrentResources,
 } from "../CharacterStats";
+import { Inventory } from "../../items";
 
 type EnemyCharacterArgs = {
   id?: string;
@@ -41,6 +42,8 @@ export abstract class EnemyCharacter
 
   protected goldReward: number;
 
+  protected inventory: Inventory;
+
   constructor(args: EnemyCharacterArgs) {
     this.id = args.id ?? crypto.randomUUID();
 
@@ -60,6 +63,7 @@ export abstract class EnemyCharacter
     this.experienceReward = args.experienceReward;
 
     this.goldReward = args.goldReward;
+    this.inventory = new Inventory();
   }
 
   public getId(): string {
@@ -211,10 +215,14 @@ export abstract class EnemyCharacter
   public getEvasion(): number {
     return 0;
   }
+
   public chooseAction(context: BattleContext): BattleActionRequest{
     return {
     action: "basic_attack",
     targetIds: [],
   };
+  }
+  public getInventory(): Inventory {
+    return this.inventory;
   }
 }

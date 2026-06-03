@@ -1,4 +1,6 @@
 import {ActionId} from "../GameSession";
+import { Inventory } from "../items";
+
 export type CharacterStat =
   | "strength"
   | "dexterity"
@@ -46,4 +48,5 @@ export interface ICharacter {
   isDead(): boolean;
   isPlayerControlled(): boolean;
   getSkillIds(): ActionId[];
+  getInventory(): Inventory;
 }

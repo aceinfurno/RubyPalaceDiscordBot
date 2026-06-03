@@ -1,11 +1,15 @@
 import { IBattleAction } from "./IBattleAction";
 import { BasicAttackAction } from "./BasicAttackAction";
 import { PowerStrikeAction } from "./PowerStrikeAction";
+import { UseItemBattleAction } from "./UseItem";
 export type ActionId =
   | "basic_attack"
-  | "power_strike";
+  | "power_strike"
+  | "use_item"
+
+
 export class ActionRegistry {
-  private static readonly actions: Record<ActionId, () => IBattleAction> = {
+  private static readonly actions: Partial<Record<ActionId, () => IBattleAction>> = {
     basic_attack: () => new BasicAttackAction(),
     power_strike: () => new PowerStrikeAction(),
   };

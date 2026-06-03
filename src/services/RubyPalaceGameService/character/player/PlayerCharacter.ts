@@ -1,7 +1,8 @@
-import { IPlayerCharacter} from "./IPlayerCharacter";
+import { IPlayerCharacter } from "./IPlayerCharacter";
 import { CharacterStats, CharacterInfo, createEmptyStats} from "../CharacterStats";
 import { CharacterClassRegistry, IPlayerClass, CharacterClassId} from "./playerClasses";
-import { ActionId} from "../../GameSession";
+import { ActionId, RewardBundle} from "../../GameSession";
+import {Inventory} from "../../items";
 
 export class PlayerCharacter implements IPlayerCharacter {
   private id: string;
@@ -21,6 +22,7 @@ export class PlayerCharacter implements IPlayerCharacter {
   private experience: number;
   private unspentStatPoints: number;
   private gold: number;
+  private inventory: Inventory;
 
   constructor(characterInfo: CharacterInfo) {
   this.id = characterInfo.id;
@@ -33,6 +35,7 @@ export class PlayerCharacter implements IPlayerCharacter {
   this.experience = characterInfo.experience ?? 0;
   this.gold = characterInfo.gold ?? 0;
   this.unspentStatPoints = characterInfo.unspentStatPoints ?? 0;
+  this.inventory = new Inventory();
 
   this.allocatedStats =
     characterInfo.allocatedStats ?? createEmptyStats();
@@ -47,6 +50,7 @@ export class PlayerCharacter implements IPlayerCharacter {
     characterInfo.currentResources?.currentSP ?? this.getMaxSP();
 
   this.clampResources();
+  this.inventory.addItem("potion", 5)
 }
 
 public static create(characterInfo: CharacterInfo): IPlayerCharacter{
@@ -239,6 +243,16 @@ private clampResources(): void {
   public getEvasion(): number {
     return 0;
   }
+  public receiveRewards(rewards: RewardBundle): void {
+    this.gold += rewards.gold;
+    this.experience += rewards.experience;
 
+    for (const item of rewards.items) {
+      this.inventory.addItem(item.itemId, item.quantity);
+    }
+  }
+  public getInventory(): Inventory {
+    return this.inventory;
+  }
 
 }

@@ -1,12 +1,21 @@
 import {IEnemyCharacter, IPlayerCharacter, ICharacter} from "../../../character";
-import { ActionId, IBattleAction, ActionRegistry } from "./actions";
+import {ItemRegistry, ItemId, IUsableItem, UsableItem} from "../../../items";
+import { ActionId, BattleAction, IBattleAction, ActionRegistry, UseItemBattleAction } from "./actions";
 export type BattlePhase =
-  | "action_select"
-  | "target_select"
+  | "battling"
   | "battle_over";
 export interface BattleActionRequest {
   action: ActionId;
   targetIds: string[];
+}
+export interface RewardItem {
+  itemId: ItemId;
+  quantity: number;
+}
+export interface RewardBundle {
+  experience: number;
+  gold: number;
+  items: RewardItem[];
 }
 export class BattleContext {
   constructor (
@@ -60,7 +69,7 @@ export class BattleManager{
   constructor(enemies: IEnemyCharacter[], activePlayer: IPlayerCharacter) {
     this.turnQueue = [...enemies];
     this.turnQueue.push(activePlayer);
-    this.battlePhase = "action_select";
+    this.battlePhase = "battling";
     this.setInitiative();
     this.currentActor = this.ensureActor(this.turnQueue.shift());
     this.addBattleLog("Battle started!");
@@ -72,8 +81,8 @@ export class BattleManager{
     }
     return currentActor;
   }
-  public continuePlayerTurn(): void {
-
+  public executePlayerTurn(): void {
+/*
     if (!this.selectedAction) {
       this.battlePhase = "action_select";
       return;
@@ -83,7 +92,7 @@ export class BattleManager{
       this.battlePhase = "target_select";
       return;
     }
-
+*/
     this.executeAction();
     this.endTurn();
     this.advanceUntilPlayerTurn();
@@ -97,11 +106,10 @@ export class BattleManager{
     const action = this.selectedAction;
     const targets = this.getSelectedTargetCharacters();
 
-    for (const target of targets) {
-      const result = action.execute(this.currentActor, target);
+    const result = action.execute(this.currentActor, targets);
 
-      this.addBattleLog(result.message);
-    }
+    this.addBattleLog(result.message);
+
 
 
     this.cleanupAfterAction();
@@ -110,9 +118,9 @@ export class BattleManager{
     const initiativeOrder = this.turnQueue.map(battler =>
       ({
         battler,
-        initative: battler.getDexterity() + this.roll(1,20)
+        initiative: battler.getDexterity() + this.roll(1,20)
       }));
-      initiativeOrder.sort((a,b) => b.initative - a.initative);
+      initiativeOrder.sort((a,b) => b.initiative - a.initiative);
       this.turnQueue = initiativeOrder.map(entry => entry.battler);
   }
   private getSelectedTargetCharacters(): ICharacter[] {
@@ -146,7 +154,7 @@ export class BattleManager{
       }
       this.startTurn();
       if (this.currentActor.isPlayerControlled()) {
-        this.continuePlayerTurn();
+        //this.continuePlayerTurn();
         return;
       }
 
@@ -167,8 +175,23 @@ export class BattleManager{
     }
     this.selectedAction = selectedAction;
   }
+  public useItem(itemId: ItemId): void {
+    const selectedItem = this.getItem(itemId);
+    const selectedAction = new UseItemBattleAction(selectedItem);
+    if (!selectedAction) {
+      throw new Error("No action assigned to Battle Manager");
+    }
+    this.selectedAction = selectedAction as IBattleAction;
+  }
   private getAction(actionId: ActionId): IBattleAction{
     return ActionRegistry.createAction(actionId);
+  }
+  private getItem(itemId: ItemId): IUsableItem {
+    const item = ItemRegistry.createItem(itemId);
+    if (!(item instanceof UsableItem)) {
+      throw new Error(`${item.getName()} is not usable.`)
+    }
+    return item;
   }
 
 
@@ -203,7 +226,6 @@ export class BattleManager{
   public cancelTargetSelection(): void {
     this.selectedTargetIds = [];
     this.selectedAction = undefined;
-    this.battlePhase = "action_select";
   }
   public getValidTargetsForSelectedAction(): ICharacter[] {
   if (!this.selectedAction) {
@@ -211,9 +233,9 @@ export class BattleManager{
   }
 
   const targetType = this.selectedAction.getTargetType();
-
+  const targetPool = this.getAllBattlers();
   if (targetType === "enemy") {
-    return this.turnQueue.filter(
+    return targetPool.filter(
       battler =>
         !battler.isPlayerControlled() &&
         battler.getCurrentHP() > 0
@@ -221,11 +243,11 @@ export class BattleManager{
   }
 
   if (targetType === "ally") {
-    return this.turnQueue.filter(
+    return targetPool.filter(
       battler =>
         battler.isPlayerControlled() &&
-        battler.getCurrentHP() > 0
-    );
+        !battler.isDead()
+);
   }
 
   if (targetType === "self") {
@@ -274,9 +296,6 @@ export class BattleManager{
   public getBattleLog(): string[] {
     return [...this.battleLog];
   }
-  public setBattlePhase(phase: BattlePhase): void {
-    this.battlePhase = phase;
-}
 
   private cleanupAfterAction(): void {
     this.selectedAction = undefined;
@@ -346,6 +365,34 @@ export class BattleManager{
       battler => battler.isPlayerControlled() && !battler.isDead()
     );
   }
+
+  public getRewardBundle(): RewardBundle {
+    return {
+      experience: this.defeatedEnemies.reduce(
+        (total, enemy) => total + enemy.getExperienceReward(), 0
+      ),
+      gold: this.defeatedEnemies.reduce(
+        (total, enemy) => total + enemy.getGoldReward(), 0
+      ),
+      items: [],
+    };
+  }
+  public canConfirmAction(): boolean {
+  if (!this.selectedAction) {
+    return false;
+  }
+
+  const maxTargets = this.selectedAction.getMaxTargets();
+
+  if (maxTargets > 0 && this.selectedTargetIds.length === 0) {
+    return false;
+  }
+
+  return this.selectedAction.canUse(
+    this.getBattleContext(),
+    this.selectedTargetIds
+  );
+}
 
   private roll(min: number, max: number): number {
     return Math.floor(Math.random() * (max - min + 1)) + min;
