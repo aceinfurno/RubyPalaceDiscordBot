@@ -138,12 +138,20 @@ Examples of extensibility within the engine include:
 ## 1. Character Creation
 ### Welcome Screen
 <img width="455" height="176" alt="Screenshot 2026-06-07 005523" src="https://github.com/user-attachments/assets/79afd173-23c0-4309-b092-4dbb4b738db4" />
+
 ### Name Entry (1)
+
 <img width="478" height="150" alt="Screenshot 2026-06-07 005511" src="https://github.com/user-attachments/assets/9c02ae98-a2a0-4247-b7af-cf71ae537ade" />
+
 ### Name Entry (2)
+
 <img width="484" height="312" alt="Screenshot 2026-06-07 005540" src="https://github.com/user-attachments/assets/cdb25eaa-01ca-437f-9e7f-28965c1cf9b8" />
+
 ### Class Selection
+
 <img width="379" height="208" alt="Screenshot 2026-06-07 005609" src="https://github.com/user-attachments/assets/992766cf-0271-48fb-8320-2c556c228bd8" />
+
 ### Confirm Character
+
 <img width="479" height="290" alt="Screenshot 2026-06-07 005558" src="https://github.com/user-attachments/assets/52b45926-e1c2-4ffb-b2d4-f62a6b5c6055" />
 
