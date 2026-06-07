@@ -14,7 +14,7 @@ The project focuses on modular game architecture, extensible systems, and state-
 - SQLite
 - Git
 
-  
+```
 
 Discord User
        │
@@ -37,7 +37,7 @@ Prisma ORM
        ▼
 SQLite Database
 The Discord layer acts as a client interface while the Ruby Palace engine manages gameplay systems independently. This separation allows alternative clients, such as web applications or REST API consumers, to be added without major changes to core game logic.
-
+```
 ```
 Ruby Palace
 │
